@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@angular/animations": "^21.2.14",
+    "zone.js": "^0.16.2"
+  }
+}
