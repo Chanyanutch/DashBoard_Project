@@ -43,25 +43,174 @@ async function runQuery(res, query) {
 }
 
 app.get('/api/dashboard/summary', async (req, res) => {
+
   try {
-    const pool = await sql.connect(dbConfig);
 
-    const result = await pool.request().query(`
+    const { year, month } = req.query;
+
+    const pool =
+      await sql.connect(dbConfig);
+
+    let query = `
       SELECT
-        ISNULL(SUM(${positivePayment}), 0) AS totalRevenue,
-        ISNULL(SUM(balance), 0) AS totalDebt,
-        ISNULL(SUM(total_charge), 0) AS totalCharge,
-        CASE
-          WHEN ISNULL(SUM(total_charge), 0) = 0 THEN 0
-          ELSE ROUND(SUM(${positivePayment}) * 100.0 / SUM(total_charge), 2)
-        END AS paymentRate
-      FROM Fact_revenue;
-    `);
 
-    res.json(result.recordset[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+      /* ===== ยอดรวมทั้งหมด ===== */
+
+      ISNULL(
+        SUM(${positivePayment}),
+        0
+      ) AS totalRevenue,
+
+      ISNULL(
+        SUM(fr.balance),
+        0
+      ) AS totalDebt,
+
+      ISNULL(
+        SUM(fr.total_charge),
+        0
+      ) AS totalCharge,
+
+      CASE
+        WHEN SUM(fr.total_charge)=0
+        THEN 0
+
+        ELSE
+          ROUND(
+            SUM(${positivePayment})
+            *100.0
+            /
+            SUM(fr.total_charge),
+            2
+          )
+      END
+
+      AS paymentRate,
+
+
+      /* ===== ตามเดือน ===== */
+
+      ISNULL(
+        SUM(
+          CASE
+            WHEN 1=1
+            ${year ? `AND dt.[year]=${Number(year)}` : ''}
+            ${month ? `AND dt.[month]=${Number(month)}` : ''}
+            THEN ${positiveFactPayment}
+            ELSE 0
+          END
+        ),
+        0
+      )
+
+      AS monthRevenue,
+
+
+      ISNULL(
+        SUM(
+          CASE
+            WHEN 1=1
+            ${year ? `AND dt.[year]=${Number(year)}` : ''}
+            ${month ? `AND dt.[month]=${Number(month)}` : ''}
+            THEN fr.balance
+            ELSE 0
+          END
+        ),
+        0
+      )
+
+      AS monthDebt,
+
+      ISNULL(
+        SUM(
+          CASE
+            WHEN 1=1
+            ${year ? `AND dt.[year]=${Number(year)}` : ''}
+            ${month ? `AND dt.[month]=${Number(month)}` : ''}
+            THEN fr.total_charge
+            ELSE 0
+          END
+        ),
+        0
+      )
+
+      AS monthCharge,
+
+      CASE
+
+      WHEN
+      SUM(
+        CASE
+          WHEN 1=1
+          ${year ? `AND dt.[year]=${Number(year)}` : ''}
+          ${month ? `AND dt.[month]=${Number(month)}` : ''}
+          THEN fr.total_charge
+          ELSE 0
+        END
+      )=0
+
+      THEN 0
+
+      ELSE
+
+      ROUND(
+
+      SUM(
+        CASE
+          WHEN 1=1
+          ${year ? `AND dt.[year]=${Number(year)}` : ''}
+          ${month ? `AND dt.[month]=${Number(month)}` : ''}
+          THEN ${positiveFactPayment}
+          ELSE 0
+        END
+      )
+
+      *100.0
+
+      /
+
+      SUM(
+        CASE
+          WHEN 1=1
+          ${year ? `AND dt.[year]=${Number(year)}` : ''}
+          ${month ? `AND dt.[month]=${Number(month)}` : ''}
+          THEN fr.total_charge
+          ELSE 0
+        END
+      )
+
+      ,2)
+
+      END
+
+      AS monthPaymentRate
+
+      FROM Fact_revenue fr
+
+      JOIN dim_time dt
+      ON fr.time_id=dt.time_id
+    `;
+
+    const result =
+      await pool.request().query(query);
+
+    res.json(
+      result.recordset[0]
+    );
+
   }
+
+  catch(err){
+
+    res
+    .status(500)
+    .json({
+      error:
+      err.message
+    });
+
+  }
+
 });
 
 app.get('/api/dashboard/revenue-chart', async (req, res) => {
