@@ -10,7 +10,7 @@
   
   โดยรายการที่ 3 และ 4 มีฟิลเตอร์สำหรับกรองค่าปี(อัพเดทจากการอ่านค่าในฐานข้อมูลได้)และมีกรองแบบรายเดือน
 
-  <img width="1894" height="984" alt="image" src="https://github.com/user-attachments/assets/af35d157-f2c3-4437-8520-379d42aad205" />
+  <img width="1892" height="972" alt="image" src="https://github.com/user-attachments/assets/0c95e861-32ee-4a19-b3f6-8651f87247fe" />
 
   <img width="1889" height="827" alt="image" src="https://github.com/user-attachments/assets/94d5f0ac-4d1e-4507-87e1-11e416d8d283" />
 
